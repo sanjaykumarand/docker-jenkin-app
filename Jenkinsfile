@@ -36,15 +36,14 @@ pipeline {
         }
 
         stage('Verify Deployment') {
-    steps {
-        echo 'Verifying application is accessible...'
-        powershell '''
-            Start-Sleep -Seconds 5
-            $response = Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing
-            if ($response.StatusCode -ne 200) { exit 1 }
-        '''
-    }
-}
+            steps {
+                echo 'Verifying application is accessible...'
+                bat '''
+                    ping -n 6 127.0.0.1 > nul
+                    "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "$response = Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing; if ($response.StatusCode -ne 200) { exit 1 }"
+                '''
+            }
+        }
     }
 
     post {
