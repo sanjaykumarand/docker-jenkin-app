@@ -36,14 +36,15 @@ pipeline {
         }
 
         stage('Verify Deployment') {
-            steps {
-                echo 'Verifying application is accessible...'
-                bat '''
-                    timeout /t 5
-                    curl -f http://localhost:%APP_PORT%/health || exit 1
-                '''
-            }
-        }
+    steps {
+        echo 'Verifying application is accessible...'
+        powershell '''
+            Start-Sleep -Seconds 5
+            $response = Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing
+            if ($response.StatusCode -ne 200) { exit 1 }
+        '''
+    }
+}
     }
 
     post {
