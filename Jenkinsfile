@@ -9,27 +9,19 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
-            steps {
-                echo 'Pulling source code from GitHub...'
-                git branch: 'main',
-                    url: 'https://github.com/sanjaykumarand/docker-jenkins-app.git'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} -t ${IMAGE_NAME}:latest .'
+                bat 'docker build -t %IMAGE_NAME%:%BUILD_NUMBER% -t %IMAGE_NAME%:latest .'
             }
         }
 
         stage('Stop & Remove Old Container') {
             steps {
                 echo 'Removing old container if it exists...'
-                sh '''
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
+                bat '''
+                    docker stop %CONTAINER_NAME% || exit 0
+                    docker rm %CONTAINER_NAME% || exit 0
                 '''
             }
         }
@@ -37,11 +29,8 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 echo 'Deploying new container...'
-                sh '''
-                    docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        -p ${APP_PORT}:3000 \
-                        ${IMAGE_NAME}:latest
+                bat '''
+                    docker run -d --name %CONTAINER_NAME% -p %APP_PORT%:3000 %IMAGE_NAME%:latest
                 '''
             }
         }
@@ -49,9 +38,9 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 echo 'Verifying application is accessible...'
-                sh '''
-                    sleep 5
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
+                bat '''
+                    timeout /t 5
+                    curl -f http://localhost:%APP_PORT%/health || exit 1
                 '''
             }
         }
@@ -65,7 +54,7 @@ pipeline {
             echo '❌ Pipeline failed. Check logs above.'
         }
         always {
-            sh 'docker image prune -f'
+            bat 'docker image prune -f'
         }
     }
 }
